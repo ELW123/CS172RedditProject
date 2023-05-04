@@ -2,6 +2,7 @@ import praw
 import json
 import sys
 import threading
+from simhash import Simhash
 
 if len(sys.argv) < 2:
     print("Usage: python script.py subreddit1 limit1 post_query1 comment_query1 [subreddit2 limit2 post_query2 comment_query2 ...] [sort_method]")
@@ -44,6 +45,14 @@ def process_post(post, post_search_query, comment_search_query):
     print("Number of Upvotes:", post.score) # upvotes
     print("Post URL:", post.url) # image in post
     print("Post Permalink:", post.permalink) # url of post
+
+    post_url_simhash = Simhash(post.url)
+
+    for existing_post_data in data["posts"]:
+        existing_post_url_simhash = Simhash(existing_post_data["url"])
+        if post_url_simhash.distance(existing_post_url_simhash) <= 3:
+            print("Duplicate or near-duplicate post found:")
+            return
 
     post.comments.replace_more(limit=None)
     for comment in post.comments.list():
