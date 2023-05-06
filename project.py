@@ -48,14 +48,14 @@ def process_post(post, post_search_query, comment_search_query):
         "permalink": post.permalink,
         "comments": []
     }
-
+    '''
     print("Post Title:", post.title) # title
     print("Post Body Text:", post.selftext) # body
     print("Post ID:", post.id) # id
     print("Number of Upvotes:", post.score) # upvotes
     print("Post URL:", post.url) # image in post
     print("Post Permalink:", post.permalink) # url of post
-
+    '''
     post_exists = False
     post_url_simhash = Simhash(post.url)
 
@@ -69,11 +69,10 @@ def process_post(post, post_search_query, comment_search_query):
         for comment in post.comments.list():
             if comment_search_query in comment.body:
                 post_data["comments"].append(comment.body)
-                print("Comment:", comment.body)
-                print()
+                #print("Comment:", comment.body)
+                #print()
 
-        if len(post_data["comments"]) > 0:
-            data["posts"].append(post_data)
+        data["posts"].append(post_data)
 
 # Define a function to process a batch of posts
 def process_batch(subreddit_name, limit, post_search_query, comment_search_query):
