@@ -61,7 +61,7 @@ def process_post(post, post_search_query, comment_search_query):
 
     for existing_post_data in data["posts"]:
         existing_post_url_simhash = Simhash(existing_post_data["url"])
-        if post_url_simhash.distance(existing_post_url_simhash) <= 10:
+        if post_url_simhash.distance(existing_post_url_simhash) <= 3:
             post_exists = True
 
     if not post_exists:
