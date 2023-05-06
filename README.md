@@ -4,7 +4,9 @@ Run the crawler.bat file to run the python crawler.
 
 Input the arguements as a string in the following format: 
 
+```sh
 <Sub_Reddit_Name_1> <Post_limit_1> <Post_Search_Query_Term_1> <Comment_Search_Query_Term_1> ... <Sub_Reddit_Name_n> <Post_limit_n> <Post_Search_Query_Term_n> <Comment_Search_Query_Term_n> <sorting_method>
+```
 
 For example, the following command
 
