@@ -5,4 +5,4 @@ REM Sort by hot
 REM Sort by new 
 REM Sort by comments 
 REM Sort by rising 
-python script.py %subreddit_input%
+python project.py %subreddit_input%
