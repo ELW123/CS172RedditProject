@@ -46,23 +46,24 @@ def process_post(post, post_search_query, comment_search_query):
     print("Post URL:", post.url) # image in post
     print("Post Permalink:", post.permalink) # url of post
 
+    post_exists = False
     post_url_simhash = Simhash(post.url)
 
     for existing_post_data in data["posts"]:
         existing_post_url_simhash = Simhash(existing_post_data["url"])
         if post_url_simhash.distance(existing_post_url_simhash) <= 3:
-            print("Duplicate or near-duplicate post found:")
-            return
+            post_exists = True
 
-    post.comments.replace_more(limit=None)
-    for comment in post.comments.list():
-        if comment_search_query in comment.body:
-            post_data["comments"].append(comment.body)
-            print("Comment:", comment.body)
-            print()
+    if post_exists:
+        post.comments.replace_more(limit=None)
+        for comment in post.comments.list():
+            if comment_search_query in comment.body:
+                post_data["comments"].append(comment.body)
+                print("Comment:", comment.body)
+                print()
 
-    if len(post_data["comments"]) > 0:
-        data["posts"].append(post_data)
+        if len(post_data["comments"]) > 0:
+            data["posts"].append(post_data)
 
 # Define a function to process a batch of posts on a separate thread
 def process_posts(posts, post_search_query, comment_search_query):
