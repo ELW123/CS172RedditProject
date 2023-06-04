@@ -1,6 +1,8 @@
 import praw
 import json
 import sys
+import threading
+from simhash import Simhash
 from concurrent.futures import ThreadPoolExecutor
 import json.decoder
 
@@ -21,6 +23,7 @@ while i < len(sys.argv) - 1:
 sort_method = sys.argv[-1] if len(sys.argv) % 4 == 2 else 'relevance'
 
 # Fill in your own stuff here
+# Remove before updating to github 
 reddit = praw.Reddit(client_id='',
                     client_secret='',
                     user_agent='')
@@ -55,10 +58,12 @@ def process_post(post, post_search_query, comment_search_query):
     print("Post Permalink:", post.permalink) # url of post
 
     post_exists = False
-    for existing_post in data["posts"]:
-        if existing_post["id"] == post.id:
+    post_url_simhash = Simhash(post.url)
+
+    for existing_post_data in data["posts"]:
+        existing_post_url_simhash = Simhash(existing_post_data["url"])
+        if post_url_simhash.distance(existing_post_url_simhash) <= 3:
             post_exists = True
-            break
 
     if not post_exists:
         post.comments.replace_more(limit=None)
