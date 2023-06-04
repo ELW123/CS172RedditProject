@@ -23,6 +23,7 @@ while i < len(sys.argv) - 1:
 sort_method = sys.argv[-1] if len(sys.argv) % 4 == 2 else 'relevance'
 
 # Fill in your own stuff here
+# Remove before updating to github 
 reddit = praw.Reddit(client_id='',
                     client_secret='',
                     user_agent='')
