@@ -47,6 +47,7 @@ def process_post(post, post_search_query, comment_search_query):
         "upvotes": post.score,
         "url": post.url,
         "permalink": post.permalink,
+        "timestamp": str(datetime.fromtimestamp(post.created_utc)),
         "comments": []
     }
     '''
@@ -55,6 +56,7 @@ def process_post(post, post_search_query, comment_search_query):
     print("Post ID:", post.id) # id
     print("Number of Upvotes:", post.score) # upvotes
     print("Post URL:", post.url) # image in post
+    timestamp gives time of submission
     print("Post Permalink:", post.permalink) # url of post
     '''
     post_exists = False
