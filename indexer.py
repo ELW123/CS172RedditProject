@@ -1,74 +1,44 @@
-import logging
-import sys
-import json
-import os
-
-logging.disable(sys.maxsize)
 import lucene
+import os
+import json
+from org.apache.lucene.store import MMapDirectory, SimpleFSDirectory, NIOFSDirectory
+from java.nio.file import Paths
 from org.apache.lucene.analysis.standard import StandardAnalyzer
 from org.apache.lucene.document import Document, Field, FieldType
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader
-from org.apache.lucene.search import IndexSearcher, Query
-from org.apache.lucene.queryparser.classic import QueryParser
-from org.apache.lucene.store import FSDirectory
-from org.apache.lucene.util import Version
-from java.nio.file import Paths
+from org.apache.lucene.index import FieldInfo, IndexWriter, IndexWriterConfig, IndexOptions, DirectoryReader
+from org.apache.lucene.search import IndexSearcher, BoostQuery, Query
+from org.apache.lucene.search.similarities import BM25Similarity
 
 lucene.initVM(vmargs=['-Djava.awt.headless=true'])
 
-def create_index(dir):
+def create_index(data, dir):
     if not os.path.exists(dir):
         os.mkdir(dir)
-    store = FSDirectory.open(Paths.get(dir))
+    store = SimpleFSDirectory(Paths.get(dir))
     analyzer = StandardAnalyzer()
     config = IndexWriterConfig(analyzer)
     config.setOpenMode(IndexWriterConfig.OpenMode.CREATE)
     writer = IndexWriter(store, config)
-
-    field_type = FieldType()
-    field_type.setStored(True)
-    field_type.setTokenized(True)
-
-    data_file = "reddit_data.json"
-
-    with open(data_file, "r") as infile:
-        data = json.load(infile)
-        for post in data["posts"]:
-            doc = Document()
-            doc.add(Field("title", post["title"], field_type))
-            doc.add(Field("body", post["body"], field_type))
-            doc.add(Field("id", post["id"], field_type))
-            doc.add(Field("upvotes", str(post["upvotes"]), field_type))
-            doc.add(Field("url", post["url"], field_type))
-            doc.add(Field("permalink", post["permalink"], field_type))
-            for i, comment in enumerate(post["comments"]):
-                doc.add(Field("comment_" + str(i+1), comment, field_type))
-            writer.addDocument(doc)
-
-    writer.commit()
+    metaType = FieldType()
+    metaType.setStored(True)
+    metaType.setTokenized(False)
+    contextType = FieldType()
+    contextType.setStored(True)
+    contextType.setTokenized(True)
+    contextType.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS)
+    for post in data["posts"]:
+        title = post['title']
+        body = post['body']
+        doc = Document()
+        doc.add(Field('Title', str(title), metaType))
+        doc.add(Field('Body', str(body), contextType))
+        writer.addDocument(doc)
     writer.close()
 
+def index_data():
+    with open('reddit_data.json') as json_file:
+        data = json.load(json_file)
+    create_index(data, 'reddit_lucene_index/')
 
-def retrieve(storedir, query):
-    searchDir = FSDirectory.open(Paths.get(storedir))
-    searcher = IndexSearcher(DirectoryReader.open(searchDir))
-    analyzer = StandardAnalyzer()
-    parser = QueryParser('Context', analyzer)
-    parsed_query = parser.parse(query)
-    topDocs = searcher.search(parsed_query, 10).scoreDocs
-    topkdocs = []
-    for hit in topDocs:
-        doc = searcher.doc(hit.doc)
-        topkdocs.append({
-            "score": hit.score,
-            "text": doc.get("Context")
-        })
-    print(topkdocs)
-
-
-index_dir = "index"
-query = 'web data'
-
-create_index(index_dir)
-retrieve(index_dir, query)
-
+if __name__ == "__main__":
+    index_data()

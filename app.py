@@ -1,62 +1,66 @@
-from flask import Flask, render_template, request
-import logging
-import sys
-import json
-import os
-
-logging.disable(sys.maxsize)
+from flask import Flask, request, render_template
 import lucene
-from org.apache.lucene.analysis.standard import StandardAnalyzer
-from org.apache.lucene.document import Document, Field, FieldType
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig, DirectoryReader
-from org.apache.lucene.search import IndexSearcher, Query
-from org.apache.lucene.queryparser.classic import QueryParser
-from org.apache.lucene.store import FSDirectory
-from org.apache.lucene.util import Version
+from org.apache.lucene.store import NIOFSDirectory
 from java.nio.file import Paths
+from org.apache.lucene.analysis.standard import StandardAnalyzer
+from org.apache.lucene.index import DirectoryReader
+from org.apache.lucene.queryparser.classic import QueryParser
+from org.apache.lucene.search import BoostQuery
+from org.apache.lucene.search import IndexSearcher, BooleanQuery, BooleanClause
 
 app = Flask(__name__)
 
-# Path to the directory where the index is located
-index_dir = "index"
+def retrieve(storedir, query):
+    searchDir = NIOFSDirectory(Paths.get(storedir))
+    searcher = IndexSearcher(DirectoryReader.open(searchDir))
+    analyzer = StandardAnalyzer()
+
+    # Parse queries
+    titleQuery = QueryParser("Title", analyzer).parse(query)
+    bodyQuery = QueryParser("Body", analyzer).parse(query)
+
+    # Boost title field by a factor of 2
+    boostedTitleQuery = BoostQuery(titleQuery, 2.0)
+
+    # Combine queries
+    combinedQuery = BooleanQuery.Builder()
+    combinedQuery.add(boostedTitleQuery, BooleanClause.Occur.SHOULD)
+    combinedQuery.add(bodyQuery, BooleanClause.Occur.SHOULD)
+
+    topDocs = searcher.search(combinedQuery.build(), 10).scoreDocs
+    topkdocs = []
+    for hit in topDocs:
+        doc = searcher.doc(hit.doc)
+        topkdocs.append({
+            "score": hit.score,
+            "title": doc.get("Title"),
+            "text": doc.get("Body")
+        })
+    return topkdocs
 
 @app.route("/")
-def index():
-    return render_template("index.html")
+def home():
+    return 'hello!~!!'
 
-@app.route("/search", methods=["POST"])
-def search():
-    query = request.form.get("query")
+@app.route("/abc")
+def abc():
+    return 'hello alien'
 
-    results = []
-    try:
-        directory = FSDirectory.open(File(index_dir).toPath())
-        reader = DirectoryReader.open(directory)
-        searcher = IndexSearcher(reader)
+@app.route('/input', methods = ['GET'])
+def input():
+    return render_template('input.html')
 
-        analyzer = StandardAnalyzer()
-        query_parser = QueryParser("body", analyzer)
-        lucene_query = query_parser.parse(query)
+@app.route('/output', methods = ['POST'])
+def output():
+    form_data = request.form
+    query = form_data['query']
+    print(f"this is the query: {query}")
+    lucene.getVMEnv().attachCurrentThread()
+    docs = retrieve('reddit_lucene_index/', str(query))
+    print(docs)
+    return render_template('output.html', lucene_output = docs)
 
-        hits = searcher.search(lucene_query, 10)
-
-        for hit in hits.scoreDocs:
-            doc = searcher.doc(hit.doc)
-            result = {
-                "title": doc.get("title"),
-                "body": doc.get("body"),
-                "id": doc.get("id"),
-                "upvotes": doc.get("upvotes"),
-                "url": doc.get("url"),
-                "permalink": doc.get("permalink"),
-                "score": hit.score
-            }
-            results.append(result)
-
-    except Exception as e:
-        print("An error occurred during search:", str(e))
-
-    return render_template("results.html", query=query, results=results)
+lucene.initVM(vmargs=['-Djava.awt.headless=true'])
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
