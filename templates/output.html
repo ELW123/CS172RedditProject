@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Search Results</h2>
+
+{% for doc in lucene_output %}
+    <h3>Score: {{ doc.score }}</h3>
+    <h4>Title: {{ doc.title }}</h4>
+    <p>{{ doc.text }}</p>
+{% endfor %}
+
+<form action="/input">
+    <input type="submit" value="Back to Input">
+</form>
+
+</body>
+</html>
