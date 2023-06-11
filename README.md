@@ -1,4 +1,4 @@
-Reddit post collector
+Reddit post collector part A:
 
 Run the crawler.bat file to run the python crawler. 
 
@@ -19,3 +19,18 @@ searches for the top 2 posts on r/dogs and r/cats that contain the word "cute" i
 
 Only comments that have search query term will be processed. 
 Collected post infomation will be written into the JSON file. 
+
+Reddit Post collector part B:
+
+Deploy Program:
+To run the indexer.py:
+Python3 indexer.py 
+Indexer will create reddit_lucene_index which is the indexed data 
+
+To run the Flask App:
+Make sure that reddit_lucene_index created 
+Export FLASK_APP=app
+flask run -h 0.0.0.0 -p 8888
+Enter the query term into the search bar in the html form.
+Click search and top 10 results will appear. 
+
